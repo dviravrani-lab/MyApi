@@ -3,10 +3,16 @@ const Meeting = require("../models/Meeting");
 module.exports = {
 
     // GET /meeting/:userId
+    // מחזיר את כל הפגישות שבהן היוזר הוא היוצר או המשתתף
     getMeetings: async (req, res) => {
         try {
+            const userId = req.params.userId;
+
             const meetings = await Meeting.find({ 
-                userId: req.params.userId 
+                $or: [
+                    { creatorUserId: userId },
+                    { participantUserId: userId }
+                ]
             });
 
             res.status(200).json(meetings);
@@ -19,7 +25,22 @@ module.exports = {
     // POST /meeting
     createMeeting: async (req, res) => {
         try {
-            const meeting = new Meeting(req.body);
+            const { title, description, date, time, location, creatorUserId, participantUserId} = req.body;
+
+            if (!title || !date || !time || !creatorUserId || !participantUserId) {
+                return res.status(400).json({ message: "Missing required fields" });
+            }
+
+            const meeting = new Meeting({
+                title,
+                description,
+                date,
+                time,
+                location,
+                creatorUserId,
+                participantUserId,
+            });
+
             await meeting.save();
 
             res.status(201).json(meeting);
@@ -32,14 +53,20 @@ module.exports = {
     // DELETE /meeting/:userId/:id
     deleteMeeting: async (req, res) => {
         try {
+            const { userId, id } = req.params;
+
+            // אפשר למחוק רק אם היוזר הוא היוצר או המשתתף
             const meeting = await Meeting.findOneAndDelete({
-                _id: req.params.id,
-                userId: req.params.userId
+                _id: id,
+                $or: [
+                    { creatorUserId: userId },
+                    { participantUserId: userId }
+                ]
             });
 
             if (!meeting) {
                 return res.status(404).json({
-                    message: "Meeting not found"
+                    message: "Meeting not found or you don't have permission"
                 });
             }
 
