@@ -34,6 +34,8 @@ app.use(bodyParser.urlencoded({ extended: true })); // Parse request body
 const MeetingRouter = require('./api/routes/MeetingRouter');
 app.use("/meeting",MeetingRouter);
 
+const UserRouter = require('./api/routes/User');
+app.use("/user",UserRouter);
 // const JobApplicationRouter = require('./api/routes/jobApplicationRoutes');
 // app.use("/job_app",JobApplicationRouter);
 
